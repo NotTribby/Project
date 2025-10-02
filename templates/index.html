@@ -1,0 +1,483 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weekly Coffee Cost Estimator ☕</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><text y='1.2em' font-size='96'>☕</text></svg>">
+  <style>
+    :root{
+      --coffee:#6b3e2e;
+      --mocha:#8b5e3c;
+      --cream:#fff7ea;
+      --foam:#f3e8d7;
+      --bean:#2f1b12;
+      --mint:#3fb49a;
+      --accent:#e07a5f;
+      --ink:#1f2937;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(64,37,25,.15), transparent 60%),
+        radial-gradient(1200px 600px at -10% 110%, rgba(64,37,25,.12), transparent 60%),
+        linear-gradient(180deg, var(--cream), var(--foam));
+    }
+    header{
+      padding:24px 20px;
+      text-align:center;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(1.6rem, 2.5vw, 2.4rem);
+      color:var(--coffee);
+      letter-spacing:.5px;
+    }
+    .subtitle{
+      margin-top:6px;
+      color:#5b5047;
+    }
+
+    .app{
+      max-width:1100px;
+      margin:0 auto;
+      padding:16px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:20px;
+    }
+    @media (max-width: 920px){
+      .app{grid-template-columns:1fr}
+    }
+
+    .card{
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 18px;
+      box-shadow: 0 20px 40px rgba(47,27,18,.08);
+      overflow:hidden;
+    }
+    .card h2{
+      margin:0;
+      padding:16px 18px;
+      background: linear-gradient(180deg, #ffffff, #f8efe0);
+      border-bottom:1px solid rgba(0,0,0,.06);
+      font-size:1.1rem;
+      color:var(--coffee);
+    }
+    .card .content{ padding:18px; }
+
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:14px; }
+    .row + .row, .row3 + .row3, .row + .row3, .row3 + .row{ margin-top:12px; }
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    label{ font-size:.92rem; color:#584b3d; }
+    select, input[type=number]{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.12);
+      background:#fff;
+      font-size:1rem;
+      outline:none;
+    }
+    input[type=checkbox]{ transform: scale(1.2); }
+
+    .segmented{
+      display:flex; background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:12px; overflow:hidden;
+    }
+    .segmented button{
+      flex:1; padding:10px 12px; border:0; background:transparent; cursor:pointer; font-weight:600; color:#694d3a;
+    }
+    .segmented button.active{ background:var(--foam); color:var(--coffee); }
+    .sizes{ display:flex; gap:8px; }
+    .chip{
+      padding:8px 12px; border-radius:999px; background:#fff; border:1px solid rgba(0,0,0,.12); cursor:pointer; font-weight:600; color:#694d3a;
+    }
+    .chip.active{ background:var(--mint); color:white; border-color:transparent; }
+
+    .prices{
+      background:linear-gradient(180deg, #fff, #f9f6f0);
+      border:1px dashed rgba(0,0,0,.1);
+      border-radius:12px;
+      padding:12px;
+      font-size:.95rem;
+      color:#4b4034;
+    }
+    .prices code{ background:#fff; padding:1px 6px; border-radius:8px; }
+
+    .totals{
+      display:grid; gap:10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .total-card{
+      padding:14px; border-radius:14px; background:linear-gradient(180deg, #ffffff, #f6efe4);
+      border:1px solid rgba(0,0,0,.06);
+      text-align:center;
+    }
+    .total-card .amt{ font-size:1.8rem; font-weight:800; color:var(--coffee); }
+    .total-card small{ display:block; color:#6b625b; }
+    .cta{
+      display:flex; gap:10px; align-items:center; justify-content:space-between; margin-top:12px;
+    }
+    .brew-badge{
+      padding:6px 10px; border-radius:999px; background:var(--coffee); color:#fff; font-weight:700; letter-spacing:.03em;
+      box-shadow: 0 8px 20px rgba(47,27,18,.25);
+    }
+    .footnote{ color:#6b625b; font-size:.9rem; }
+
+    /* Coffee mug mascot */
+    .mascot{
+      display:flex; align-items:center; gap:14px; padding:14px; background:linear-gradient(180deg, #fff, #f8efe0);
+      border:1px solid rgba(0,0,0,.06); border-radius:14px;
+    }
+    .mug{
+      width:56px; height:56px; border-radius:12px; background: radial-gradient(circle at 50% 35%, #8b5e3c 0 52%, #2f1b12 53% 100%);
+      position:relative; box-shadow: inset 0 8px 18px rgba(0,0,0,.25), 0 8px 20px rgba(47,27,18,.2);
+    }
+    .mug::after{
+      content:""; position:absolute; right:-10px; top:16px; width:18px; height:24px; border:5px solid #c7b5a0; border-radius:12px;
+      background:transparent;
+    }
+    .steam{ position:absolute; left:12px; top:-6px; width:30px; height:30px; }
+    .steam span{
+      position:absolute; width:6px; height:6px; border-radius:20px; background:rgba(255,255,255,.8);
+      animation: rise 3.5s ease-in-out infinite;
+    }
+    .steam span:nth-child(2){ left:12px; animation-delay:.7s }
+    .steam span:nth-child(3){ left:22px; animation-delay:1.4s }
+    @keyframes rise{
+      0%{ transform: translateY(0) scale(1); opacity: .9; }
+      60%{ opacity:.5 }
+      100%{ transform: translateY(-22px) scale(.6); opacity:0; }
+    }
+
+    .breakdown{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .breakdown table{ width:100%; border-collapse:collapse; }
+    .breakdown th, .breakdown td{ text-align:left; padding:8px 6px; border-bottom:1px dashed rgba(0,0,0,.08); }
+    .breakdown td:last-child{ text-align:right; }
+    .notice{ font-size:.9rem; color:#5b5047; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Weekly Coffee Cost Estimator ☕</h1>
+    <div class="subtitle">Fun, interactive, and coffee-shop chic—see how much your weekly coffee habit costs.</div>
+  </header>
+
+  <main class="app">
+    <section class="card">
+      <h2>Build Your Drink</h2>
+      <div class="content">
+        <div class="segmented" role="tablist" aria-label="Brew category">
+          <button id="hotBtn" class="active" aria-selected="true">Hot Brew</button>
+          <button id="coldBtn" aria-selected="false">Cold Brew</button>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <div class="field">
+            <label for="style">Coffee Style</label>
+            <select id="style" aria-label="Coffee Style"></select>
+          </div>
+          <div class="field">
+            <label>Size</label>
+            <div class="sizes" role="group" aria-label="Size">
+              <button class="chip active" data-size="Small">Small</button>
+              <button class="chip" data-size="Medium">Medium</button>
+              <button class="chip" data-size="Large">Large</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <div class="field">
+            <label for="shopperType">Shopper Type</label>
+            <select id="shopperType">
+              <option>Personal Curiosity</option>
+              <option>Average Shopper</option>
+              <option>Bulk Shopper</option>
+            </select>
+            <div id="bulkNote" class="notice" style="display:none">Bulk mode: we'll compute a per-batch total below.</div>
+          </div>
+          <div class="field" id="bulkQtyWrap" style="display:none">
+            <label for="bulkQty">Bulk quantity (cups per batch)</label>
+            <input id="bulkQty" type="number" min="1" step="1" value="24"/>
+          </div>
+        </div>
+
+        <div class="row3" style="margin-top:8px">
+          <div class="field">
+            <label for="perWeek">Cups per week</label>
+            <input id="perWeek" type="number" min="0" step="1" value="7"/>
+          </div>
+          <div class="field">
+            <label for="shots">Espresso shots (each)</label>
+            <input id="shots" type="number" min="0" step="1" value="0"/>
+          </div>
+          <div class="field">
+            <label>Whipped cream</label>
+            <div style="display:flex; align-items:center; gap:10px; padding:11px 8px">
+              <input id="whipped" type="checkbox"/>
+              <span>Yes, add a dollop</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row3">
+          <div class="field">
+            <label for="sugar">Sugar (teaspoons)</label>
+            <input id="sugar" type="number" min="0" step="0.5" value="0"/>
+          </div>
+          <div class="field">
+            <label for="cream">Cream (ounces)</label>
+            <input id="cream" type="number" min="0" step="0.5" value="0"/>
+          </div>
+          <div class="field">
+            <label for="milk">Milk (ounces)</label>
+            <input id="milk" type="number" min="0" step="0.5" value="0"/>
+          </div>
+        </div>
+
+        <div class="prices" style="margin-top:14px">
+          <div><strong>Average Prices</strong></div>
+          <div id="priceTable"></div>
+          <div style="margin-top:8px; font-size:.9rem">
+            Add-on pricing:
+            <code id="addonPrices"></code>
+          </div>
+        </div>
+
+        <div class="cta">
+          <span class="brew-badge" id="brewBadge">Hot Brew</span>
+          <div style="display:flex; gap:8px">
+            <button id="estimateBtn" class="chip">Estimate</button>
+            <button id="resetBtn" class="chip">Reset</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <h2>Cost Summary</h2>
+      <div class="content">
+        <div class="mascot">
+          <div class="mug">
+            <div class="steam">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:800; color:var(--coffee)">Here’s your sip-nosis</div>
+            <div class="footnote">Prices update live as you tweak ingredients.</div>
+          </div>
+        </div>
+
+        <div class="totals" style="margin-top:12px">
+          <div class="total-card">
+            <div class="amt" id="perCup">$0.00</div>
+            <small>Per cup</small>
+          </div>
+          <div class="total-card">
+            <div class="amt" id="perWeekAmt">$0.00</div>
+            <small>Per week</small>
+          </div>
+          <div class="total-card">
+            <div class="amt" id="perMonth">$0.00</div>
+            <small>Per month (avg)</small>
+          </div>
+          <div class="total-card">
+            <div class="amt" id="perYear">$0.00</div>
+            <small>Per year</small>
+          </div>
+          <div class="total-card" id="perBulkCard" style="display:none">
+            <div class="amt" id="perBulk">$0.00</div>
+            <small>Per bulk batch</small>
+          </div>
+        </div>
+
+        <div class="breakdown" style="margin-top:14px">
+          <table>
+            <thead><tr><th>Component</th><th>$/cup</th></tr></thead>
+            <tbody id="breakdownRows"></tbody>
+          </table>
+          <div id="bulkBreakdownWrap" style="display:none; margin-top:10px">
+            <table>
+              <thead><tr><th>Component (bulk)</th><th>Total $</th></tr></thead>
+              <tbody id="breakdownBulkRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // Injected by Flask/Jinja
+    const BASE_PRICES = {{ base_prices|tojson }};
+    const ADDON_PRICES = {{ addon_prices|tojson }};
+
+    let category = "Hot Brew";
+    let size = "Small";
+
+    const hotBtn = document.getElementById("hotBtn");
+    const coldBtn = document.getElementById("coldBtn");
+    const styleSel = document.getElementById("style");
+    const brewBadge = document.getElementById("brewBadge");
+    const shopperTypeSel = document.getElementById("shopperType");
+    const bulkQtyWrap = document.getElementById("bulkQtyWrap");
+    const bulkNote = document.getElementById("bulkNote");
+    const perBulkCard = document.getElementById("perBulkCard");
+    const bulkBreakdownWrap = document.getElementById("bulkBreakdownWrap");
+
+    function populateStyles(){
+      styleSel.innerHTML = "";
+      const styles = Object.keys(BASE_PRICES[category]);
+      for(const s of styles){
+        const opt = document.createElement("option");
+        opt.value = s; opt.textContent = s;
+        styleSel.appendChild(opt);
+      }
+      updatePriceTable();
+    }
+
+    function updatePriceTable(){
+      const styles = BASE_PRICES[category];
+      const tableDiv = document.getElementById("priceTable");
+      let html = "<table style='width:100%; border-collapse:collapse; margin-top:6px'>";
+      html += "<tr><th style='text-align:left;padding:6px'>Style</th><th>Small</th><th>Medium</th><th>Large</th></tr>";
+      Object.entries(styles).forEach(([name, sizes]) => {
+        html += `<tr>
+          <td style="padding:6px 4px">${name}</td>
+          <td style="text-align:center">$${sizes.Small.toFixed(2)}</td>
+          <td style="text-align:center">$${sizes.Medium.toFixed(2)}</td>
+          <td style="text-align:center">$${sizes.Large.toFixed(2)}</td>
+        </tr>`
+      });
+      html += "</table>";
+      tableDiv.innerHTML = html;
+
+      const addonDiv = document.getElementById("addonPrices");
+      addonDiv.textContent = Object.entries(ADDON_PRICES).map(([k,v])=>`${k}: $${v.toFixed(2)}`).join("  ·  ");
+    }
+
+    hotBtn.addEventListener("click", () => {
+      category = "Hot Brew";
+      hotBtn.classList.add("active");
+      coldBtn.classList.remove("active");
+      brewBadge.textContent = "Hot Brew";
+      populateStyles();
+      estimate();
+    });
+
+    coldBtn.addEventListener("click", () => {
+      category = "Cold Brew";
+      coldBtn.classList.add("active");
+      hotBtn.classList.remove("active");
+      brewBadge.textContent = "Cold Brew";
+      populateStyles();
+      estimate();
+    });
+
+    document.querySelectorAll(".chip[data-size]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".chip[data-size]").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        size = btn.dataset.size;
+        estimate();
+      });
+    });
+
+    shopperTypeSel.addEventListener("change", () => {
+      const bulkMode = shopperTypeSel.value === "Bulk Shopper";
+      bulkQtyWrap.style.display = bulkMode ? "" : "none";
+      bulkNote.style.display = bulkMode ? "" : "none";
+      perBulkCard.style.display = bulkMode ? "" : "none";
+      bulkBreakdownWrap.style.display = bulkMode ? "" : "none";
+      estimate();
+    });
+
+    function readInputs(){
+      return {
+        category,
+        style: styleSel.value,
+        size,
+        per_week: document.getElementById("perWeek").value || 0,
+        shots: document.getElementById("shots").value || 0,
+        whipped: document.getElementById("whipped").checked,
+        sugar_tsp: document.getElementById("sugar").value || 0,
+        cream_oz: document.getElementById("cream").value || 0,
+        milk_oz: document.getElementById("milk").value || 0,
+        shopper_type: shopperTypeSel.value,
+        bulk_qty: document.getElementById("bulkQty").value || 24,
+      }
+    }
+
+    async function estimate(){
+      const payload = readInputs();
+      const res = await fetch("/estimate", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      document.getElementById("perCup").textContent = `$${data.price_per_cup.toFixed(2)}`;
+      document.getElementById("perWeekAmt").textContent = `$${data.weekly_cost.toFixed(2)}`;
+      document.getElementById("perMonth").textContent = `$${data.monthly_cost.toFixed(2)}`;
+      document.getElementById("perYear").textContent = `$${data.yearly_cost.toFixed(2)}`;
+
+      const tbody = document.getElementById("breakdownRows");
+      tbody.innerHTML = "";
+      Object.entries(data.breakdown).forEach(([k,v])=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${k}</td><td style="text-align:right">$${Number(v).toFixed(2)}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      if (data.shopper_type === "Bulk Shopper") {
+        document.getElementById("perBulk").textContent = `$${Number(data.bulk_cost || 0).toFixed(2)}`;
+        const tbb = document.getElementById("breakdownBulkRows");
+        tbb.innerHTML = "";
+        const bd = data.breakdown_bulk || {};
+        Object.entries(bd).forEach(([k,v]) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${k}</td><td style="text-align:right">$${Number(v).toFixed(2)}</td>`;
+          tbb.appendChild(tr);
+        });
+      }
+    }
+
+    document.getElementById("estimateBtn").addEventListener("click", estimate);
+    document.getElementById("resetBtn").addEventListener("click", ()=>{
+      category="Hot Brew"; size="Small";
+      hotBtn.classList.add("active"); coldBtn.classList.remove("active");
+      brewBadge.textContent = "Hot Brew";
+      document.querySelectorAll(".chip[data-size]").forEach((b,i)=>{
+        b.classList.toggle("active", i===0);
+      });
+      document.getElementById("perWeek").value = 7;
+      document.getElementById("shots").value = 0;
+      document.getElementById("whipped").checked = false;
+      document.getElementById("sugar").value = 0;
+      document.getElementById("cream").value = 0;
+      document.getElementById("milk").value = 0;
+      shopperTypeSel.value = "Personal Curiosity";
+      bulkQtyWrap.style.display = "none";
+      bulkNote.style.display = "none";
+      perBulkCard.style.display = "none";
+      bulkBreakdownWrap.style.display = "none";
+      populateStyles();
+      estimate();
+    });
+
+    // Initialize
+    populateStyles();
+    estimate();
+  </script>
+</body>
+</html>
