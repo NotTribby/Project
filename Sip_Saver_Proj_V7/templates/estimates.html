@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>My Estimates</title>
+  <style>
+    body{margin:0;font-family:system-ui;background:#fff7ea;color:#1f2937}
+    .wrap{max-width:1000px;margin:6vh auto;padding:20px}
+    a{color:#6b3e2e;text-decoration:none}
+    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.05);padding:20px}
+    h1{margin:0 0 12px;color:#6b3e2e}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px dashed rgba(0,0,0,.08);text-align:left;vertical-align:top}
+    td pre{white-space:pre-wrap;word-break:break-word}
+    button{padding:6px 10px;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;cursor:pointer}
+    .row-actions{display:flex;gap:6px;flex-wrap:wrap}
+    .subtle{color:#6b625b;font-size:.9rem}
+    .search{margin-top:10px;margin-bottom:10px}
+    input[type=text]{padding:8px 10px;border:1px solid rgba(0,0,0,.12);border-radius:8px;width:100%}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>My Estimates</h1>
+      <div><a href="{{ url_for('estimator') }}">⬅ Back to estimator</a></div>
+
+      {% if items %}
+      <div class="search"><input id="q" type="text" placeholder="Filter by name..."></div>
+      <table style="margin-top:12px" id="tbl">
+        <thead><tr><th style="width:70px">ID</th><th>Name</th><th style="width:170px">Saved</th><th style="width:170px">Updated</th><th style="width:260px">Actions</th></tr></thead>
+        <tbody>
+          {% for _id, name, payload, created, updated in items %}
+            <tr data-name="{{ name|e }}">
+              <td>{{ _id }}</td>
+              <td><strong>{{ name or ('Estimate #' ~ _id) }}</strong><div class="subtle">{{ payload.category }} • {{ payload.style }} • {{ payload.size }}</div></td>
+              <td>{{ created }}</td>
+              <td>{{ updated or created }}</td>
+              <td>
+                <div class="row-actions">
+                  <button onclick="goLoad({{ _id }})">Open & Edit</button>
+                  <button onclick="doRename({{ _id }}, '{{ (name or '')|e }}')">Rename</button>
+                  <button onclick="doDelete({{ _id }})" style="border-color:#e07a5f">Delete</button>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <p style="margin-top:12px">No saved estimates yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    function goLoad(id){
+      window.location = "{{ url_for('estimator') }}" + "?estimate_id=" + id;
+    }
+    async function doRename(id, current){
+      const name = prompt("New name:", current || "");
+      if (!name) return;
+      const res = await fetch("/rename_estimate", {
+        method:"POST", headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({id, name})
+      });
+      const data = await res.json();
+      if (data.ok) location.reload(); else alert(data.error || "Rename failed.");
+    }
+    async function doDelete(id){
+      if (!confirm("Delete this estimate? This cannot be undone.")) return;
+      const res = await fetch("/delete_estimate", {
+        method:"POST", headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({id})
+      });
+      const data = await res.json();
+      if (data.ok) location.reload(); else alert(data.error || "Delete failed.");
+    }
+    // simple client-side filter
+    const q = document.getElementById("q");
+    if (q){
+      q.addEventListener("input", ()=>{
+        const term = q.value.toLowerCase();
+        document.querySelectorAll("#tbl tbody tr").forEach(tr=>{
+          const name = (tr.getAttribute("data-name")||"").toLowerCase();
+          tr.style.display = name.includes(term) ? "" : "none";
+        });
+      });
+    }
+  </script>
+</body>
+</html>

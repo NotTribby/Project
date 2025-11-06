@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Log in</title>
+  <style>
+    body{margin:0;font-family:system-ui;background:#fff7ea;color:#1f2937}
+    .wrap{max-width:520px;margin:12vh auto;padding:20px}
+    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.05);padding:24px}
+    h1{margin:0 0 12px;color:#6b3e2e}
+    label{display:block;margin-bottom:6px}
+    input{width:100%;padding:12px;border:1px solid rgba(0,0,0,.12);border-radius:10px}
+    button{margin-top:16px;padding:12px 14px;border:0;border-radius:10px;background:#6b3e2e;color:#fff;font-weight:700;cursor:pointer}
+    .msg{margin-top:10px;color:#b45309}
+    a{color:#6b3e2e}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Log in</h1>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat, msg in messages %}<div class="msg">{{ msg }}</div>{% endfor %}
+        {% endif %}
+      {% endwith %}
+      <form method="post">
+        <label>Email or Username</label>
+        <input name="identifier" required>
+        <label style="margin-top:10px">Password</label>
+        <input name="password" type="password" required>
+        <button type="submit">Log in</button>
+      </form>
+      <div class="msg">No account? <a href="{{ url_for('register') }}">Register</a> · <a href="{{ url_for('home') }}">Back</a></div>
+    </div>
+  </div>
+</body>
+</html>
